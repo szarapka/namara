@@ -1,5 +1,6 @@
 var Promise = require('bluebird');
 var http    = require('http');
+var qs      = require('qs');
 
 /**
  * Default HTTP Options for the Namara API.
@@ -39,11 +40,10 @@ function Namara (apiKey, debug) {
 Namara.prototype.get = function (dataset, version, options) {
   var req;
 
-  // TODO: Incorporate Defaults instead of false
   if(typeof options === undefined) {
     options = false;
   }
-  // Do validation for dataset, version and options.
+
   if (this.debug) {
     console.log('Namara: Opening request to http://' + OPTS.host + OPTS.prefix + dataset + '/data/' + version);
     if (options) {

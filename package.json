@@ -12,7 +12,8 @@
   },
   "main": "namara",
   "dependencies": {
-    "bluebird": "~2.9.12"
+    "bluebird": "~2.9.12",
+    "qs": "~2.3.3"
     },
   "devDependencies": {},
   "engines": {
