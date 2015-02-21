@@ -1,5 +1,10 @@
-var http = require('http');
+var Promise = require('bluebird');
+var http    = require('http');
 
+/**
+ * Default HTTP Options for the Namara API.
+ * @type {Object}
+ */
 var OPTS = {
     host: 'api.namara.io',
     port: 80,
@@ -12,8 +17,8 @@ var OPTS = {
 
 /**
  * Constructor
- * @param string apiKey Namara API key.
- * @param boolean debug  Enable debug mode when true.
+ * @param string    apiKey    Namara API key.
+ * @param boolean   debug     Enable debug mode when true.
  */
 function Namara (apiKey, debug) {
   this.apiKey = apiKey !== null ? apiKey : null;
@@ -21,22 +26,20 @@ function Namara (apiKey, debug) {
   if (this.apiKey === null) {
     this.apiKey = process.env.NAMARA_APIKEY;
   }
-  if (debug === true) {
-    console.log('NAMARA-API DEBUG MODE ENABLED');
-    console.log('==================================');
-    console.log('API KEY: ' + this.apiKey);
-  }
 }
 
 /**
  * Get
  * Makes a request for a dataset from the Namara API.
- * @param  string dataset [description]
- * @param  string version [description]
- * @param  object options [description]
- * @return promise         [description]
+ * @param  string   dataset   [description]
+ * @param  string   version   [description]
+ * @param  object   options   [description]
+ * @return promise            [description]
  */
 Namara.prototype.get = function (dataset, version, options) {
+  var req;
+
+  // TODO: Incorporate Defaults instead of false
   if(typeof options === undefined) {
     options = false;
   }
@@ -47,6 +50,29 @@ Namara.prototype.get = function (dataset, version, options) {
       console.log('Options Specified: ' + options);
     }
   }
+
+  OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '?api_key=' + this.apiKey;
+
+  req = http.request(OPTS, function (res) {
+    var json;
+    res.setEncoding('utf8');
+    json = '';
+
+    res.on('data', function (d) {
+      return json += d;
+    });
+
+    return res.on('end', function () {
+      if (res.statusCode !== 200) {
+        return console.log('error');
+      } else {
+        json = JSON.parse(json);
+        return console.log(json);
+      }
+    });
+  });
+
+  req.end();
 
 };
 
