@@ -1,21 +1,25 @@
 {
   "author": "Scott Szarapka <scott@szarapka.com> (http://szarapka.com)",
   "name": "namara",
-  "description": "The un-official API client for the Namara open data service.",
+  "description": "The unofficial API client for the Namara open data service.",
   "version": "0.1.0",
   "homepage": "https://github.com/szarapka/namara",
   "bugs": "https://github.com/szarapka/namara/issues",
   "contributors": "https://github.com/szarapka/namara/graphs/contributors",
+  "keywords": [
+    "namara",
+    "opendata",
+    "canada",
+    "government"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:szarapka/namara.git"
   },
   "main": "namara",
   "dependencies": {
-    "bluebird": "~2.9.12",
-    "qs": "~2.3.3"
+    "bluebird": "~2.9.12"
     },
-  "devDependencies": {},
   "engines": {
     "node": "*"
   }

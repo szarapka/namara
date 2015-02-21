@@ -1,20 +1,28 @@
 var Promise = require('bluebird');
 var http    = require('http');
-var qs      = require('qs');
 
 /**
  * Default HTTP Options for the Namara API.
- * @type {Object}
+ * @type Object
  */
 var OPTS = {
-    host: 'api.namara.io',
-    port: 80,
-    prefix: '/v0/data_sets/',
-    method: 'GET',
-    headers: {
-      'User-Agent': 'Namara-Node/0.1.0'
-    }
-  };
+  host: 'api.namara.io',
+  port: 80,
+  prefix: '/v0/data_sets/',
+  method: 'GET',
+  headers: {
+    'User-Agent': 'Namara-Node/0.1.0'
+  }
+};
+
+/**
+ * Acceptable API options for Validation.
+ * @type Object
+ */
+var acceptableOptions = {
+  general: ['select','where','offset','limit',],
+  aggregation: ['sum','avg','min','max','count','geocluster','geobounds']
+};
 
 /**
  * Constructor
@@ -39,26 +47,62 @@ function Namara (apiKey, debug) {
  */
 Namara.prototype.get = function (dataset, version, options) {
   var req;
+  var that = this;            // Preserve State
 
-  if(typeof options === undefined) {
+  if (typeof options === undefined) {
     options = false;
   }
 
-  if (this.debug) {
-    console.log('Namara: Opening request to http://' + OPTS.host + OPTS.prefix + dataset + '/data/' + version);
-    if (options) {
-      console.log('Options Specified: ' + options);
-    }
-  }
-
+  // Setup Base Path
   OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '?api_key=' + this.apiKey;
 
+  // If we have options - do stuff with them
+  if (options) {
+
+    // Check for aggregations
+    if (options.aggregation && Object.keys(options.aggregation).length == 1) {
+      OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '/aggregation';
+      var prop = Object.getOwnPropertyNames(options.aggregation);
+      var name = prop[0];
+      if(acceptableOptions.aggregation.indexOf(name) > -1) {
+        var value = Object.getOwnPropertyDescriptor(options.aggregation, name);
+        OPTS.path += '?' + name + '(' + value.value + ')&api_key=' + this.apiKey;
+        delete options.aggregation;
+      } else {
+        throw new Error('Invalid aggregation option.');
+      }
+    } else if (options.aggregation && Object.keys(options.aggregation).length > 1) {
+      throw new Error('Multiple aggregations are not supported.');
+    }
+
+    var props = Object.getOwnPropertyNames(options);
+    props.forEach(function (name) {
+      if(acceptableOptions.general.indexOf(name) > -1) {
+        var value = Object.getOwnPropertyDescriptor(options, name);
+        OPTS.path += '&' + name + '=' + value.value;
+      } else {
+        throw new Error('Invalid option.');
+      }
+    });
+  }
+
+  if (this.debug) {
+    console.log('REQUEST: http://' + OPTS.host + OPTS.path);
+  }
+
   req = http.request(OPTS, function (res) {
-    var json;
+    var json = '';
+
+    if (that.debug) {
+      console.log('STATUS: ' + res.statusCode);
+      console.log('HEADERS: ' + JSON.stringify(res.headers));
+    }
     res.setEncoding('utf8');
-    json = '';
 
     res.on('data', function (d) {
+      if (that.debug) {
+        console.log('BODY: ' + d);
+      }
       return json += d;
     });
 
@@ -70,6 +114,10 @@ Namara.prototype.get = function (dataset, version, options) {
         return console.log(json);
       }
     });
+  });
+
+  req.on('error', function (e) {
+    console.log('Error: ' + e.message);
   });
 
   req.end();
