@@ -1,6 +1,8 @@
 Namara
 ======
 
+[![npm version](https://badge.fury.io/js/namara.svg)](http://badge.fury.io/js/namara)
+
 The unofficial node.js client for the Namara Open Data service. [namara.io](http://namara.io)
 
 ## Installation
@@ -94,6 +96,7 @@ var options = {
     geobounds: 'p3'
   }
 }
+```
 
 ## License
 
