@@ -1,13 +1,99 @@
-Node.js API Client for Namara
-=============================
+Namara
+======
 
-The unofficial node.js client for the Namara Open Data API. [namara.io](http://namara.io)
+The unofficial node.js client for the Namara Open Data service. [namara.io](http://namara.io)
 
 ## Installation
 
-```javascript
+```bash
 npm install namara
 ```
+
+## Usage
+
+### Instantiation
+
+You need a valid API key in order to access Namara (you can find it in your My Account details on namara.io).
+
+```javascript
+var Namara = require('namara');
+
+var namara = new Namara('{YOUR_API_KEY}');
+```
+
+You can also optionally enable debug mode by passing a second argument:
+
+```javascript
+var namara = new Namara('{YOUR_API_KEY}', true);
+```
+
+### Getting Data
+
+FYI: All requests return [promises](https://promisesaplus.com/).
+
+To make a basic request to the Namara API you can call `get` on your instantiated object and pass it the ID of the dataset you want and the ID of the version of the data set:
+
+```javascript
+namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2')
+.then(function (data) {
+  console.log(data);
+})
+.error(function (e) {
+  // Depending on how Namara feels you may need e.message
+  // or e.error for a readable message.
+  console.log('Stop Breaking Shit, idiot: ' + e.error);
+});
+```
+
+Without a third options argument passed, this will return data with the Namara default offset (0) and limit (10) applied. To specify options, you can pass an options argument:
+
+```javascript
+var options = {
+  offset: 0,
+  limit: 150
+};
+
+namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2', options)
+.then(function (data) {
+  console.log(data);
+})
+.error(function (e) {
+  console.log('Stop Breaking Shit, idiot: ' + e.error);
+});
+```
+
+### Options
+
+All [Namara data options](http://namara.io/#/api) are supported.
+
+**Basic options**
+
+```javascript
+var options = {
+  select: 'p0,p1',
+  where: 'p0 = 100 AND nearby(p3, 43.25, -123.1, 10km)',
+  offset: 0,
+  limit: 10,
+}
+```
+
+**Aggregation options**
+Only one aggregation option can be specified in a request, in the case of this example, all options are illustrated, but passing more than one in the options object will throw an error.
+
+```
+var options = {
+  offset: 0,
+  limit: 10,
+  aggregation: {
+    sum: 'p0',
+    avg: 'p0',
+    min: 'p0',
+    max: 'p0',
+    count: '*',
+    geocluster: 'p3, 10',
+    geobounds: 'p3'
+  }
+}
 
 ## License
 

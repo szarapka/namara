@@ -32,96 +32,99 @@ var acceptableOptions = {
 function Namara (apiKey, debug) {
   this.apiKey = apiKey !== null ? apiKey : null;
   this.debug  = debug !== null ? debug : false;
-  if (this.apiKey === null) {
-    this.apiKey = process.env.NAMARA_APIKEY;
-  }
+  if (this.apiKey === null) this.apiKey = process.env.NAMARA_APIKEY;
 }
 
 /**
  * Get
  * Makes a request for a dataset from the Namara API.
- * @param  string   dataset   [description]
- * @param  string   version   [description]
- * @param  object   options   [description]
- * @return promise            [description]
+ * @param  string   dataset   ID of the dataset you want to get.
+ * @param  string   version   Dataset version (en-0, en-1, etc.).
+ * @param  object   options   http://namara.io/#/api
+ * @return promise
  */
 Namara.prototype.get = function (dataset, version, options) {
-  var req;
   var that = this;            // Preserve State
 
-  if (typeof options === undefined) {
-    options = false;
-  }
+  // Let's return a promise
+  return new Promise(function (resolve, reject) {
+    var req;
 
-  // Setup Base Path
-  OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '?api_key=' + this.apiKey;
-
-  // If we have options - do stuff with them
-  if (options) {
-
-    // Check for aggregations
-    if (options.aggregation && Object.keys(options.aggregation).length == 1) {
-      OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '/aggregation';
-      var prop = Object.getOwnPropertyNames(options.aggregation);
-      var name = prop[0];
-      if(acceptableOptions.aggregation.indexOf(name) > -1) {
-        var value = Object.getOwnPropertyDescriptor(options.aggregation, name);
-        OPTS.path += '?' + name + '(' + value.value + ')&api_key=' + this.apiKey;
-        delete options.aggregation;
-      } else {
-        throw new Error('Invalid aggregation option.');
-      }
-    } else if (options.aggregation && Object.keys(options.aggregation).length > 1) {
-      throw new Error('Multiple aggregations are not supported.');
+    if (typeof options === undefined) {
+      options = false;
     }
 
-    var props = Object.getOwnPropertyNames(options);
-    props.forEach(function (name) {
-      if(acceptableOptions.general.indexOf(name) > -1) {
-        var value = Object.getOwnPropertyDescriptor(options, name);
-        OPTS.path += '&' + name + '=' + value.value;
-      } else {
-        throw new Error('Invalid option.');
+    // Setup Base Path
+    OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '?api_key=' + that.apiKey;
+
+    // If we have options - do stuff with them
+    if (options) {
+
+      // Check for aggregations
+      if (options.aggregation && Object.keys(options.aggregation).length == 1) {
+        OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '/aggregation?api_key=' + that.apiKey;
+        var prop = Object.getOwnPropertyNames(options.aggregation);
+        var name = prop[0];
+        if(acceptableOptions.aggregation.indexOf(name) > -1) {
+          var value = Object.getOwnPropertyDescriptor(options.aggregation, name);
+          OPTS.path += '&operation=' + name + '(' + value.value + ')';
+          delete options.aggregation;
+        } else {
+          throw new Error('Invalid aggregation option.');
+        }
+      } else if (options.aggregation && Object.keys(options.aggregation).length > 1) {
+        throw new Error('Multiple aggregations are not supported.');
       }
-    });
-  }
 
-  if (this.debug) {
-    console.log('REQUEST: http://' + OPTS.host + OPTS.path);
-  }
-
-  req = http.request(OPTS, function (res) {
-    var json = '';
+      var props = Object.getOwnPropertyNames(options);
+      props.forEach(function (name) {
+        if(acceptableOptions.general.indexOf(name) > -1) {
+          var value = Object.getOwnPropertyDescriptor(options, name);
+          OPTS.path += '&' + name + '=' + value.value;
+        } else {
+          throw new Error('Invalid option.');
+        }
+      });
+    }
 
     if (that.debug) {
-      console.log('STATUS: ' + res.statusCode);
-      console.log('HEADERS: ' + JSON.stringify(res.headers));
+      console.log('REQUEST: http://' + OPTS.host + OPTS.path);
     }
-    res.setEncoding('utf8');
 
-    res.on('data', function (d) {
+    req = http.request(OPTS, function (res) {
+      var json = '';
+
       if (that.debug) {
-        console.log('BODY: ' + d);
+        console.log('STATUS: ' + res.statusCode);
+        console.log('HEADERS: ' + JSON.stringify(res.headers));
       }
-      return json += d;
+      res.setEncoding('utf8');
+
+      res.on('data', function (d) {
+        if (that.debug) {
+          console.log('BODY: ' + d);
+        }
+        return json += d;
+      });
+
+      return res.on('end', function () {
+        if (res.statusCode !== 200) {
+          if (that.debug) console.log('NAMARA ERROR: ' + json);
+          return reject(JSON.parse(json));
+        } else {
+          json = JSON.parse(json);
+          return resolve(json);
+        }
+      });
     });
 
-    return res.on('end', function () {
-      if (res.statusCode !== 200) {
-        return console.log('error');
-      } else {
-        json = JSON.parse(json);
-        return console.log(json);
-      }
+    req.on('error', function (e) {
+      if (that.debug) console.log('Error: ' + e.message);
+      return reject(e);
     });
+
+    req.end();
   });
-
-  req.on('error', function (e) {
-    console.log('Error: ' + e.message);
-  });
-
-  req.end();
-
 };
 
 module.exports = Namara;
