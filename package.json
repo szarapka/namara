@@ -2,7 +2,7 @@
   "author": "Scott Szarapka <scott@szarapka.com> (http://szarapka.com)",
   "name": "namara",
   "description": "The unofficial API client for the Namara open data service.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/szarapka/namara",
   "bugs": "https://github.com/szarapka/namara/issues",
   "contributors": "https://github.com/szarapka/namara/graphs/contributors",

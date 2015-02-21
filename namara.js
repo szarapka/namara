@@ -11,7 +11,7 @@ var OPTS = {
   prefix: '/v0/data_sets/',
   method: 'GET',
   headers: {
-    'User-Agent': 'Namara-Node/0.1.0'
+    'User-Agent': 'Namara-Node/0.1.1'
   }
 };
 
