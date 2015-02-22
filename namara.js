@@ -11,7 +11,7 @@ var OPTS = {
   prefix: '/v0/data_sets/',
   method: 'GET',
   headers: {
-    'User-Agent': 'Namara-Node/0.1.1'
+    'User-Agent': 'Namara-Node/0.2.0'
   }
 };
 
@@ -41,18 +41,29 @@ function Namara (apiKey, debug) {
  * @param  string   dataset   ID of the dataset you want to get.
  * @param  string   version   Dataset version (en-0, en-1, etc.).
  * @param  object   options   http://namara.io/#/api
+ * @param  function callback  Optional callback function.
  * @return promise
  */
-Namara.prototype.get = function (dataset, version, options) {
+Namara.prototype.get = function (dataset, version, options, callback) {
   var that = this;            // Preserve State
+  var useCallback = false;    // By default we prefer promises.
+  var req;
+
+  // Allow callback to be passed as third argument
+  if (typeof options === undefined) {
+    options = false;
+  } else {
+    if (typeof options === 'function') {
+      callback = options;
+      options = false;
+    }
+  }
+
+  if (callback && typeof callback === 'function') useCallback = true;
 
   // Let's return a promise
   return new Promise(function (resolve, reject) {
-    var req;
 
-    if (typeof options === undefined) {
-      options = false;
-    }
 
     // Setup Base Path
     OPTS.path = '' + OPTS.prefix + dataset + '/data/' + version + '?api_key=' + that.apiKey;
@@ -110,17 +121,29 @@ Namara.prototype.get = function (dataset, version, options) {
       return res.on('end', function () {
         if (res.statusCode !== 200) {
           if (that.debug) console.log('NAMARA ERROR: ' + json);
-          return reject(JSON.parse(json));
+          if (useCallback) {
+            return callback(JSON.parase(json));
+          } else {
+            return reject(JSON.parse(json));
+          }
         } else {
           json = JSON.parse(json);
-          return resolve(json);
+          if (useCallback) {
+            return callback(null, json);
+          } else {
+            return resolve(json);
+          }
         }
       });
     });
 
     req.on('error', function (e) {
       if (that.debug) console.log('Error: ' + e.message);
-      return reject(e);
+      if (useCallback) {
+        return callback(e);
+      } else {
+        return reject(e);
+      }
     });
 
     req.end();
