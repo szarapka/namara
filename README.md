@@ -31,8 +31,6 @@ var namara = new Namara('{YOUR_API_KEY}', true);
 
 ### Getting Data
 
-FYI: All requests return [promises](https://promisesaplus.com/).
-
 To make a basic request to the Namara API you can call `get` on your instantiated object and pass it the ID of the dataset you want and the ID of the version of the data set:
 
 ```javascript
@@ -46,6 +44,8 @@ namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2')
   console.log('Stop Breaking Shit, idiot: ' + e.error);
 });
 ```
+
+(All `get` requests return [promises](https://promisesaplus.com/) by default.)
 
 Without a third options argument passed, this will return data with the Namara default offset (0) and limit (10) applied. To specify options, you can pass an options argument:
 
@@ -61,6 +61,24 @@ namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2', options)
 })
 .error(function (e) {
   console.log('Stop Breaking Shit, idiot: ' + e.error);
+});
+```
+
+If you'd like to use a callback instead, the following is supported:
+
+```javascript
+namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2', options, function (err, data) {
+  if(err) console.log(err);
+  ...
+});
+```
+
+You can also pass the callback as the third argument:
+
+```javascript
+namara.get('18b854e3-66bd-4a00-afba-8eabfc54f524', 'en-2', function (err, data) {
+  if(err) console.log(err);
+  ...
 });
 ```
 
@@ -82,7 +100,7 @@ var options = {
 **Aggregation options**
 Only one aggregation option can be specified in a request, in the case of this example, all options are illustrated, but passing more than one in the options object will throw an error.
 
-```
+```javascript
 var options = {
   offset: 0,
   limit: 10,
